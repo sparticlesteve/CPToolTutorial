@@ -19,6 +19,7 @@
 
 // CP includes
 #include "MuonMomentumCorrections/MuonCalibrationAndSmearingTool.h"
+#include "MuonSelectorTools/MuonSelectionTool.h"
 
 // Error checking macro
 #define CHECK( ARG )                                 \
@@ -67,8 +68,12 @@ int main(int argc, char* argv[])
   // @@@ Create and configure your CP tools here @@@ //
 
   // Muon calib tool
-  CP::MuonCalibrationAndSmearingTool muonCalibTool("MuonCalibrationAndSmearingTool");
+  CP::MuonCalibrationAndSmearingTool muonCalibTool("MuonCalibTool");
   CHECK( muonCalibTool.initialize() );
+
+  // Muon selection tool
+  CP::MuonSelectionTool muonSelectTool("MuonSelectTool");
+  CHECK( muonSelectTool.initialize() );
 
   // Loop over events
   Long64_t nEntries = event.getEntries();
@@ -97,10 +102,15 @@ int main(int argc, char* argv[])
     std::pair<xAOD::MuonContainer*, xAOD::ShallowAuxContainer*> muonCopyPair =
       xAOD::shallowCopyContainer(*muons);
 
-    // Calibrate my muons
+    // Loop over my muons
     xAOD::MuonContainer* myMuons = muonCopyPair.first;
     for(auto muon : *myMuons){
+      // Calibrate muon
       CHECK( muonCalibTool.applyCorrection(*muon) != CP::CorrectionCode::Error );
+      // Apply quality selection
+      if(muonSelectTool.accept(*muon)){
+        Info(APP_NAME, "Muon %lu passes quality cuts", muon->index());
+      }
     }
 
     // Compare muon PT
