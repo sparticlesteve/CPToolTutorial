@@ -10,6 +10,7 @@
 #include "xAODRootAccess/Init.h"
 #include "xAODRootAccess/TEvent.h"
 #include "xAODRootAccess/TStore.h"
+#include "xAODCore/ShallowCopy.h"
 #include "AsgTools/StatusCode.h"
 
 // EDM includes
@@ -86,6 +87,14 @@ int main(int argc, char* argv[])
 
     // Print the number of muons
     Info(APP_NAME, "Number of muons: %lu", muons->size());
+
+    // Create a shallow copy of the muons
+    std::pair<xAOD::MuonContainer*, xAOD::ShallowAuxContainer*> muonCopyPair =
+      xAOD::shallowCopyContainer(*muons);
+
+    // Record our copies in the transient store
+    CHECK( store.record(muonCopyPair.first, "MyMuons") );
+    CHECK( store.record(muonCopyPair.second, "MyMuonsAux.") );
 
     // Clear the transient store
     store.clear();
