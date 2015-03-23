@@ -68,7 +68,6 @@ int main(int argc, char* argv[])
   nEntries = std::min(nEntries, 20ll); // Remove this to run all events
   for(Long64_t entry = 0; entry < nEntries; ++entry)
   {
-
     // Tell TEvent which entry to use
     event.getEntry(entry);
 
