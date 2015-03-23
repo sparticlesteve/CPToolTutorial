@@ -119,34 +119,46 @@ int main(int argc, char* argv[])
     // Print the number of muons
     Info(APP_NAME, "Number of muons: %lu", muons->size());
 
-    // Create a shallow copy of the muons
-    std::pair<xAOD::MuonContainer*, xAOD::ShallowAuxContainer*> muonCopyPair =
-      xAOD::shallowCopyContainer(*muons);
+    // Loop over systematics
+    for(auto sys : sysList){
+      Info(APP_NAME, "Processing systematic: %s", sys.name().c_str());
 
-    // Loop over my muons
-    xAOD::MuonContainer* myMuons = muonCopyPair.first;
-    for(auto muon : *myMuons){
-      // Calibrate muon
-      CHECK( muonCalibTool.applyCorrection(*muon) != CP::CorrectionCode::Error );
-      // Apply quality selection
-      if(muonSelectTool.accept(*muon)){
-        float w = 1;
-        CHECK( muonEffTool.getEfficiencyScaleFactor(*muon, w) !=
-               CP::CorrectionCode::Error );
-        Info(APP_NAME, "Muon %lu selected with weight %f", muon->index(), w);
+      // Configure systematics tools
+      CHECK( muonCalibTool.applySystematicVariation(sys) );
+      CHECK( muonEffTool.applySystematicVariation(sys) );
+
+      // Create a shallow copy of the muons
+      std::pair<xAOD::MuonContainer*, xAOD::ShallowAuxContainer*> muonCopyPair =
+        xAOD::shallowCopyContainer(*muons);
+
+      // Loop over my muons
+      xAOD::MuonContainer* myMuons = muonCopyPair.first;
+      for(auto muon : *myMuons){
+        // Calibrate muon
+        CHECK( muonCalibTool.applyCorrection(*muon) != CP::CorrectionCode::Error );
+        // Apply quality selection
+        if(muonSelectTool.accept(*muon)){
+          float w = 1;
+          CHECK( muonEffTool.getEfficiencyScaleFactor(*muon, w) !=
+                 CP::CorrectionCode::Error );
+          Info(APP_NAME, "Muon %lu selected with pt %f, w %f", muon->index(),
+               muon->pt()*0.001, w);
+        }
       }
-    }
 
-    // Compare muon PT
-    for(size_t i = 0; i < muons->size(); ++i){
-      Info(APP_NAME, "Muon %lu old pt: %f, new pt: %f", i,
-           (*muons)[i]->pt()*0.001,
-           (*myMuons)[i]->pt()*0.001);
-    }
+      // Compare muon PT
+      /*for(size_t i = 0; i < muons->size(); ++i){
+        Info(APP_NAME, "Muon %lu old pt: %f, new pt: %f", i,
+             (*muons)[i]->pt()*0.001,
+             (*myMuons)[i]->pt()*0.001);
+      }*/
 
-    // Record our copies in the transient store
-    CHECK( store.record(muonCopyPair.first, "MyMuons") );
-    CHECK( store.record(muonCopyPair.second, "MyMuonsAux.") );
+      // Record our copies in the transient store
+      std::string myMuonsName = "MyMuons" + sys.name();
+      CHECK( store.record(muonCopyPair.first, myMuonsName) );
+      CHECK( store.record(muonCopyPair.second, myMuonsName + "Aux.") );
+
+    }
 
     // Clear the transient store
     store.clear();
