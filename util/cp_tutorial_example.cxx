@@ -12,6 +12,8 @@
 #include "xAODRootAccess/TStore.h"
 #include "xAODCore/ShallowCopy.h"
 #include "AsgTools/StatusCode.h"
+#include "PATInterfaces/SystematicRegistry.h"
+#include "PATInterfaces/SystematicsUtil.h"
 
 // EDM includes
 #include "xAODEventInfo/EventInfo.h"
@@ -81,6 +83,18 @@ int main(int argc, char* argv[])
   CP::MuonEfficiencyScaleFactors muonEffTool("MuonEffTool");
   CHECK( muonEffTool.setProperty("WorkingPoint", "CBandST") );
   CHECK( muonEffTool.initialize() );
+
+  // Get the recommended systematics
+  const CP::SystematicRegistry& registry =
+    CP::SystematicRegistry::getInstance();
+  CP::SystematicSet recommendedSysts = registry.recommendedSystematics();
+  Info(APP_NAME, "Recommended systematics:");
+  for(auto sys : recommendedSysts)
+    Info(APP_NAME, sys.name().c_str());
+
+  // Get a simple list of systematics
+  std::vector<CP::SystematicSet> sysList =
+    CP::make_systematics_vector(recommendedSysts);
 
   // Loop over events
   Long64_t nEntries = event.getEntries();
