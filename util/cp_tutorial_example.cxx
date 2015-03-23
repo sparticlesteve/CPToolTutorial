@@ -17,6 +17,9 @@
 #include "xAODEventInfo/EventInfo.h"
 #include "xAODMuon/MuonContainer.h"
 
+// CP includes
+#include "MuonMomentumCorrections/MuonCalibrationAndSmearingTool.h"
+
 // Error checking macro
 #define CHECK( ARG )                                 \
   do {                                               \
@@ -63,7 +66,9 @@ int main(int argc, char* argv[])
 
   // @@@ Create and configure your CP tools here @@@ //
 
-
+  // Muon calib tool
+  CP::MuonCalibrationAndSmearingTool muonCalibTool("MuonCalibrationAndSmearingTool");
+  CHECK( muonCalibTool.initialize() );
 
   // Loop over events
   Long64_t nEntries = event.getEntries();
@@ -91,6 +96,12 @@ int main(int argc, char* argv[])
     // Create a shallow copy of the muons
     std::pair<xAOD::MuonContainer*, xAOD::ShallowAuxContainer*> muonCopyPair =
       xAOD::shallowCopyContainer(*muons);
+
+    // Calibrate my muons
+    xAOD::MuonContainer* myMuons = muonCopyPair.first;
+    for(auto muon : *myMuons){
+      CHECK( muonCalibTool.applyCorrection(*muon) != CP::CorrectionCode::Error );
+    }
 
     // Record our copies in the transient store
     CHECK( store.record(muonCopyPair.first, "MyMuons") );
