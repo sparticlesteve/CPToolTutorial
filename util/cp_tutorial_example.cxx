@@ -103,6 +103,13 @@ int main(int argc, char* argv[])
       CHECK( muonCalibTool.applyCorrection(*muon) != CP::CorrectionCode::Error );
     }
 
+    // Compare muon PT
+    for(size_t i = 0; i < muons->size(); ++i){
+      Info(APP_NAME, "Muon %lu old pt: %f, new pt: %f", i,
+           (*muons)[i]->pt()*0.001,
+           (*myMuons)[i]->pt()*0.001);
+    }
+
     // Record our copies in the transient store
     CHECK( store.record(muonCopyPair.first, "MyMuons") );
     CHECK( store.record(muonCopyPair.second, "MyMuonsAux.") );
