@@ -14,6 +14,7 @@
 
 // EDM includes
 #include "xAODEventInfo/EventInfo.h"
+#include "xAODMuon/MuonContainer.h"
 
 // Error checking macro
 #define CHECK( ARG )                                 \
@@ -78,6 +79,10 @@ int main(int argc, char* argv[])
          "===>>> Processing event #%lli, "
          "run #%u, %lli events processed so far  <<<===",
          evtInfo->eventNumber(), evtInfo->runNumber(), entry);
+
+    // Retrieve the muon container
+    const xAOD::MuonContainer* muons = 0;
+    CHECK( event.retrieve(muons, "Muons") );
 
     // Clear the transient store
     store.clear();
