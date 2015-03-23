@@ -20,6 +20,7 @@
 // CP includes
 #include "MuonMomentumCorrections/MuonCalibrationAndSmearingTool.h"
 #include "MuonSelectorTools/MuonSelectionTool.h"
+#include "MuonEfficiencyCorrections/MuonEfficiencyScaleFactors.h"
 
 // Error checking macro
 #define CHECK( ARG )                                 \
@@ -73,7 +74,13 @@ int main(int argc, char* argv[])
 
   // Muon selection tool
   CP::MuonSelectionTool muonSelectTool("MuonSelectTool");
+  CHECK( muonSelectTool.setProperty("MuQuality", (int)xAOD::Muon::Medium) );
   CHECK( muonSelectTool.initialize() );
+
+  // Muon efficiency tool
+  CP::MuonEfficiencyScaleFactors muonEffTool("MuonEffTool");
+  CHECK( muonEffTool.setProperty("WorkingPoint", "CBandST") );
+  CHECK( muonEffTool.initialize() );
 
   // Loop over events
   Long64_t nEntries = event.getEntries();
@@ -109,7 +116,10 @@ int main(int argc, char* argv[])
       CHECK( muonCalibTool.applyCorrection(*muon) != CP::CorrectionCode::Error );
       // Apply quality selection
       if(muonSelectTool.accept(*muon)){
-        Info(APP_NAME, "Muon %lu passes quality cuts", muon->index());
+        float w = 1;
+        CHECK( muonEffTool.getEfficiencyScaleFactor(*muon, w) !=
+               CP::CorrectionCode::Error );
+        Info(APP_NAME, "Muon %lu selected with weight %f", muon->index(), w);
       }
     }
 
