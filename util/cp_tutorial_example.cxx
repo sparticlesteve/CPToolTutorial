@@ -84,6 +84,9 @@ int main(int argc, char* argv[])
     const xAOD::MuonContainer* muons = 0;
     CHECK( event.retrieve(muons, "Muons") );
 
+    // Print the number of muons
+    Info(APP_NAME, "Number of muons: %lu", muons->size());
+
     // Clear the transient store
     store.clear();
   }
